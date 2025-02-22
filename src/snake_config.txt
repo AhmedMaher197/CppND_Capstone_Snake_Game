@@ -1,0 +1,12 @@
+Game Settings:
+--------------
+FramePerSeconds: 60
+ScreenWidth: 640
+ScreenHeight: 640
+GridWidth: 32
+GridHeight: 32
+
+
+Game Score:
+------------
+HighestScore: 0

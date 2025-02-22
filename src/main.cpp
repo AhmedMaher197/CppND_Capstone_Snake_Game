@@ -5,7 +5,7 @@
 
 int main() {
 
-  GameConfig config("snake_config.txt");
+  GameConfig config("../src/snake_config.txt");
   auto game_settings = config.GetGameSettings();
 
   Renderer renderer(game_settings.screen_width,
@@ -29,6 +29,7 @@ int main() {
   std::cout << "Score: " << game.GetScore() << "\n";
   std::cout << "Size: " << game.GetSize() << "\n";
   
-  config.SaveConfig("snake_config.txt");
+  config.SaveConfig("../src/snake_config.txt");
+  
   return 0;
 }

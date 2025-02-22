@@ -55,19 +55,36 @@ void GameConfig::LoadConfig(const std::string& file_name)
 
 void GameConfig::SaveConfig(const std::string& filename) 
 {
-        std::ofstream config_file(filename);
-        
-        // Write game settings section
-        config_file << "Game Settings:\n"
-                   << "--------------\n"
-                   << "FramePerSeconds: " << game_settings_.frames_per_second << "\n"
-                   << "ScreenWidth: " << game_settings_.screen_width << "\n"
-                   << "ScreenHeight: " << game_settings_.screen_height << "\n"
-                   << "GridWidth: " << game_settings_.grid_width << "\n"
-                   << "GridHeight: " << game_settings_.grid_height << "\n\n\n"
-                   << "Game Score:\n"
-                   << "------------\n"
-                   << "HighestScore: " << highest_score_ << "\n";
+        std::ofstream config_file(filename, std::ios::out | std::ios::trunc);
+    
+    if (!config_file.is_open()) {
+        std::cerr << "Failed to open file for writing: " << filename << "\n";
+        return;
+    }
+
+    // Write content with error checking
+    config_file << "Game Settings:\n"
+               << "--------------\n"
+               << "FramePerSeconds: " << game_settings_.frames_per_second << "\n"
+               << "ScreenWidth: " << game_settings_.screen_width << "\n"
+               << "ScreenHeight: " << game_settings_.screen_height << "\n"
+               << "GridWidth: " << game_settings_.grid_width << "\n"
+               << "GridHeight: " << game_settings_.grid_width << "\n\n\n";
+
+    // Write the score section separately to ensure it's not being skipped
+    config_file << "Game Score:\n"
+               << "------------\n"
+               << "HighestScore: " << highest_score_ << "\n";
+
+    // Force the write to disk
+    config_file.flush();
+    
+    // Check if any errors occurred during writing
+    if (config_file.fail()) {
+        std::cerr << "Error occurred while writing to file\n";
+    }
+
+    config_file.close();
 }
 
 void GameConfig::SetNewHighScore(int new_score)
@@ -149,12 +166,13 @@ void Game::PlaceFood() {
 }
 
 void Game::Update() {
-  if (!snake.alive) return;
+  if (!snake.IsSnakeAlive()) return;
 
   snake.Update();
 
-  int new_x = static_cast<int>(snake.head_x);
-  int new_y = static_cast<int>(snake.head_y);
+  auto snake_head_pos = snake.GetSnakeHeadPosition();
+  int new_x = static_cast<int>(snake_head_pos.x);
+  int new_y = static_cast<int>(snake_head_pos.y);
 
   // Check if there's food over here
   if (food.x == new_x && food.y == new_y) {
@@ -162,9 +180,9 @@ void Game::Update() {
     PlaceFood();
     // Grow snake and increase speed.
     snake.GrowBody();
-    snake.speed += 0.02;
+    snake.IncreaseSpeed();
   }
 }
 
 int Game::GetScore() const { return score; }
-int Game::GetSize() const { return snake.size; }
+int Game::GetSize() const { return snake.GetSize(); }
