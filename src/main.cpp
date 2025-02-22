@@ -4,19 +4,31 @@
 #include "renderer.h"
 
 int main() {
-  constexpr std::size_t kFramesPerSecond{60};
-  constexpr std::size_t kMsPerFrame{1000 / kFramesPerSecond};
-  constexpr std::size_t kScreenWidth{640};
-  constexpr std::size_t kScreenHeight{640};
-  constexpr std::size_t kGridWidth{32};
-  constexpr std::size_t kGridHeight{32};
 
-  Renderer renderer(kScreenWidth, kScreenHeight, kGridWidth, kGridHeight);
+  GameConfig config("snake_config.txt");
+  auto game_settings = config.GetGameSettings();
+
+  Renderer renderer(game_settings.screen_width,
+                    game_settings.screen_height, 
+                    game_settings.grid_width, 
+                    game_settings.grid_height);
+
   Controller controller;
-  Game game(kGridWidth, kGridHeight);
-  game.Run(controller, renderer, kMsPerFrame);
+
+  Game game(game_settings.grid_width, game_settings.grid_height);
+  game.Run(controller, renderer, game_settings.ms_per_frame);
+
   std::cout << "Game has terminated successfully!\n";
+
+  if(config.GetHighestScore() < game.GetScore())
+  {
+    std::cout << "Congrats, a New Score Has been achieved.!\n";
+    config.SetNewHighScore(game.GetScore());
+  }
+
   std::cout << "Score: " << game.GetScore() << "\n";
   std::cout << "Size: " << game.GetSize() << "\n";
+  
+  config.SaveConfig("snake_config.txt");
   return 0;
 }

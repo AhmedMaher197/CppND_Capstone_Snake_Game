@@ -6,6 +6,33 @@
 #include "controller.h"
 #include "renderer.h"
 #include "snake.h"
+#include <fstream>  
+#include <sstream>  
+
+struct GameSettings
+{
+  std::size_t frames_per_second;
+  std::size_t ms_per_frame;
+  std::size_t screen_width;
+  std::size_t screen_height;
+  std::size_t grid_width;
+  std::size_t grid_height;
+};
+
+class GameConfig
+{
+  public:
+   GameConfig(const std::string&);
+   void SaveConfig(const std::string&); 
+   void LoadConfig(const std::string&); 
+   GameSettings GetGameSettings() const;
+   int GetHighestScore() const;
+   void SetNewHighScore(int);
+  private:
+    int highest_score_;
+    GameSettings game_settings_;
+};
+
 
 class Game {
  public:

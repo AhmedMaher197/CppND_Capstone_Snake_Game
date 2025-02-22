@@ -2,6 +2,89 @@
 #include <iostream>
 #include "SDL.h"
 
+
+GameConfig::GameConfig(const std::string& config_file) : highest_score_{},
+                                                         game_settings_{
+                                                                         60,                   // frames_per_second - standard refresh rate
+                                                                         1000/60,              // ms_per_frame - calculated from FPS
+                                                                         640,                  // screen_width - default window width
+                                                                         640,                  // screen_height - default window height
+                                                                         32,                   // grid_width - default game grid width
+                                                                         32                    // grid_height - default game grid height
+                                                                     }
+
+{ 
+  LoadConfig(config_file);
+}
+
+void GameConfig::LoadConfig(const std::string& file_name) 
+{
+    std::ifstream config_file(file_name);
+    std::string line;
+
+    if (!config_file.is_open()) {
+        std::cerr << "Could not open config file: " << file_name << "\n";
+        std::cerr << "Using default values\n";
+        return;
+    }
+
+    while (std::getline(config_file, line)) 
+    {
+        if (line.empty() || line[0] == '-') continue;
+            
+        std::istringstream line_stream(line);
+        std::string key;
+            
+        std::getline(line_stream, key, ':');
+            
+        if (key == "FramePerSeconds") {
+            line_stream >> game_settings_.frames_per_second;
+        } else if (key == "ScreenWidth") {
+            line_stream >> game_settings_.screen_width;
+        } else if (key == "ScreenHeight") {
+            line_stream >> game_settings_.screen_height;
+        } else if (key == "GridWidth") {
+            line_stream >> game_settings_.grid_width;
+        } else if (key == "GridHeight") {
+            line_stream >> game_settings_.grid_height;
+        } else if (key == "HighestScore") {
+            line_stream >> highest_score_;
+        }
+    }
+}
+
+void GameConfig::SaveConfig(const std::string& filename) 
+{
+        std::ofstream config_file(filename);
+        
+        // Write game settings section
+        config_file << "Game Settings:\n"
+                   << "--------------\n"
+                   << "FramePerSeconds: " << game_settings_.frames_per_second << "\n"
+                   << "ScreenWidth: " << game_settings_.screen_width << "\n"
+                   << "ScreenHeight: " << game_settings_.screen_height << "\n"
+                   << "GridWidth: " << game_settings_.grid_width << "\n"
+                   << "GridHeight: " << game_settings_.grid_height << "\n\n\n"
+                   << "Game Score:\n"
+                   << "------------\n"
+                   << "HighestScore: " << highest_score_ << "\n";
+}
+
+void GameConfig::SetNewHighScore(int new_score)
+{
+  highest_score_ = new_score;
+} 
+
+int GameConfig::GetHighestScore() const
+{
+  return highest_score_;
+}
+
+GameSettings GameConfig::GetGameSettings() const
+{
+  return game_settings_;
+}
+
 Game::Game(std::size_t grid_width, std::size_t grid_height)
     : snake(grid_width, grid_height),
       engine(dev()),
