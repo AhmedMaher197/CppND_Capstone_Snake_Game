@@ -104,10 +104,68 @@ GameSettings GameConfig::GetGameSettings() const
 
 Game::Game(std::size_t& grid_width, std::size_t& grid_height)
     : snake(grid_width, grid_height),
-      engine(dev()),
+      food{},
+      running_{true},
+      engine{dev()},
       random_w(0, static_cast<int>(grid_width - 1)),
-      random_h(0, static_cast<int>(grid_height - 1)) {
-  PlaceFood();
+      random_h(0, static_cast<int>(grid_height - 1)),
+      food_future_{},
+      food_mutex_{}
+{
+  StartFoodPlacement();
+}
+
+Game::~Game() 
+{
+  running_ = false;
+  if (food_future_.valid()) 
+  {
+    food_future_.wait();  
+  }
+}
+
+void Game::StartFoodPlacement() 
+{
+  food_future_ = std::async(std::launch::async, 
+                           &Game::CalculateNextFoodPosition, 
+                           this);
+}
+
+Game::FoodPosition Game::CalculateNextFoodPosition() 
+{
+  FoodPosition position;
+  position.valid = false;
+
+  // Keep trying positions until we find a valid one or the game is stopping
+  while (running_) 
+  {
+    position.x = random_w(engine);
+    position.y = random_h(engine);
+
+    // Check if position is valid (not occupied by snake)
+    if (!snake.SnakeCell(position.x, position.y)) 
+    {
+      position.valid = true;
+      return position;
+    }
+  }
+
+  return position;  // Return invalid position if game is stopping
+}
+
+void Game::UpdateFoodPosition() 
+{
+  if (food_future_.valid() && 
+      food_future_.wait_for(std::chrono::seconds(0)) == std::future_status::ready) 
+  {
+    
+    auto new_position = food_future_.get();
+    if (new_position.valid) {
+      std::lock_guard<std::mutex> lock(food_mutex_);
+      food.x = new_position.x;
+      food.y = new_position.y;
+    }
+  }
 }
 
 void Game::Run(Controller const &controller, Renderer &renderer,
@@ -165,7 +223,8 @@ void Game::PlaceFood() {
   }
 }
 
-void Game::Update() {
+void Game::Update() 
+{
   if (!snake.IsSnakeAlive()) return;
 
   snake.Update();
@@ -174,14 +233,27 @@ void Game::Update() {
   int new_x = static_cast<int>(snake_head_pos.x);
   int new_y = static_cast<int>(snake_head_pos.y);
 
-  // Check if there's food over here
-  if (food.x == new_x && food.y == new_y) {
+  // Check if snake has found food
+  bool food_eaten = false;
+  {
+    std::lock_guard<std::mutex> lock(food_mutex_);
+    if (food.x == new_x && food.y == new_y) {
+      food_eaten = true;
+    }
+  }
+
+  if (food_eaten) {
     score++;
-    PlaceFood();
-    // Grow snake and increase speed.
+    // Start calculating next food position asynchronously
+    StartFoodPlacement();
+    
+    // Grow snake and increase speed
     snake.GrowBody();
     snake.IncreaseSpeed();
   }
+  
+  // Check if we need to update food position from async calculation
+  UpdateFoodPosition();
 }
 
 int Game::GetScore() const { return score; }

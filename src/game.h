@@ -8,6 +8,7 @@
 #include "snake.h"
 #include <fstream>  
 #include <sstream>  
+#include <future>
 
 struct GameSettings
 {
@@ -44,7 +45,7 @@ class GameConfig
 class Game {
  public:
   Game(std::size_t& grid_width, std::size_t& grid_height);
-  ~Game() = default;
+  ~Game();
 
   Game(const Game& other) = delete; 
   Game& operator=(const Game& other) = delete;
@@ -57,8 +58,17 @@ class Game {
   int GetSize() const;
 
  private:
+
+  struct FoodPosition 
+  {
+    int x;
+    int y;
+    bool valid;  
+  };
+
   Snake snake;
   SDL_Point food;
+  std::atomic<bool> running_; 
 
   std::random_device dev;
   std::mt19937 engine;
@@ -66,7 +76,14 @@ class Game {
   std::uniform_int_distribution<int> random_h;
 
   int score{0};
+  
+  std::future<FoodPosition> food_future_;  // Holds the future food position
+  mutable std::mutex food_mutex_;          // Protects food position updates
 
+  // Food placement methods
+  void StartFoodPlacement();               // Initiates async food calculation
+  FoodPosition CalculateNextFoodPosition();// Worker thread function
+  void UpdateFoodPosition();               // Checks and updates food position
   void PlaceFood();
   void Update();
 };
