@@ -47,6 +47,7 @@ class Game {
   Game(std::size_t& grid_width, std::size_t& grid_height);
   ~Game();
 
+  //Rule of 5 Implementation
   Game(const Game& other) = delete; 
   Game& operator=(const Game& other) = delete;
   Game(Game&& other) noexcept = delete;
@@ -54,6 +55,8 @@ class Game {
 
   void Run(Controller const &controller, Renderer &renderer,
            std::size_t& target_frame_duration);
+  
+  //Setters & Getters
   int GetScore() const;
   int GetSize() const;
 
@@ -78,13 +81,13 @@ class Game {
   int score{0};
   
   std::future<FoodPosition> food_future_;  // Holds the future food position
+  //Mutex and Lock Implementation
   mutable std::mutex food_mutex_;          // Protects food position updates
 
   // Food placement methods
   void StartFoodPlacement();               // Initiates async food calculation
   FoodPosition CalculateNextFoodPosition();// Worker thread function
   void UpdateFoodPosition();               // Checks and updates food position
-  void PlaceFood();
   void Update();
 };
 

@@ -17,6 +17,7 @@ GameConfig::GameConfig(const std::string& config_file) : highest_score_{},
   LoadConfig(config_file);
 }
 
+//File I/O Operations
 void GameConfig::LoadConfig(const std::string& file_name) 
 {
     std::ifstream config_file(file_name);
@@ -53,6 +54,7 @@ void GameConfig::LoadConfig(const std::string& file_name)
     }
 }
 
+//File I/O Operations
 void GameConfig::SaveConfig(const std::string& filename) 
 {
         std::ofstream config_file(filename, std::ios::out | std::ios::trunc);
@@ -102,6 +104,7 @@ GameSettings GameConfig::GetGameSettings() const
   return game_settings_;
 }
 
+//Constructor Implementation
 Game::Game(std::size_t& grid_width, std::size_t& grid_height)
     : snake(grid_width, grid_height),
       food{},
@@ -112,6 +115,7 @@ Game::Game(std::size_t& grid_width, std::size_t& grid_height)
       food_future_{},
       food_mutex_{}
 {
+  //Multithreading Implementation
   StartFoodPlacement();
 }
 
@@ -124,6 +128,8 @@ Game::~Game()
   }
 }
 
+//Multithreading Implementation
+//Promise and Future Implementation
 void Game::StartFoodPlacement() 
 {
   food_future_ = std::async(std::launch::async, 
@@ -155,6 +161,7 @@ Game::FoodPosition Game::CalculateNextFoodPosition()
 
 void Game::UpdateFoodPosition() 
 {
+  //Promise and Future Implementation
   if (food_future_.valid() && 
       food_future_.wait_for(std::chrono::seconds(0)) == std::future_status::ready) 
   {
@@ -168,6 +175,7 @@ void Game::UpdateFoodPosition()
   }
 }
 
+//Use of References in Function Declarations
 void Game::Run(Controller const &controller, Renderer &renderer,
                std::size_t& target_frame_duration) {
   Uint32 title_timestamp = SDL_GetTicks();
@@ -176,7 +184,7 @@ void Game::Run(Controller const &controller, Renderer &renderer,
   Uint32 frame_duration;
   int frame_count = 0;
   bool running = true;
-
+  //Understanding of C++ Functions and Control Structures
   while (running) {
     frame_start = SDL_GetTicks();
 
@@ -204,21 +212,6 @@ void Game::Run(Controller const &controller, Renderer &renderer,
     // achieve the correct frame rate.
     if (frame_duration < target_frame_duration) {
       SDL_Delay(target_frame_duration - frame_duration);
-    }
-  }
-}
-
-void Game::PlaceFood() {
-  int x, y;
-  while (true) {
-    x = random_w(engine);
-    y = random_h(engine);
-    // Check that the location is not occupied by a snake item before placing
-    // food.
-    if (!snake.SnakeCell(x, y)) {
-      food.x = x;
-      food.y = y;
-      return;
     }
   }
 }

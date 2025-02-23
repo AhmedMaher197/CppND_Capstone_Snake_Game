@@ -1,7 +1,7 @@
 #include "snake.h"
 #include <cmath>
 #include <iostream>
-
+//Constructor Implementation
 Snake::Snake(int grid_width_, int grid_height_)
       : grid_width_(grid_width_),
         grid_height_(grid_height_),

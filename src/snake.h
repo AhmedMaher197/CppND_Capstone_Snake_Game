@@ -4,12 +4,11 @@
 #include <vector>
 #include "SDL.h"
 
-
-
+//Class Access Specifiers and Organization
 class Snake {
  public:
   enum class Direction { kUp, kDown, kLeft, kRight };
-
+  //Templates
   template<typename T>
   struct Position
   {
@@ -20,6 +19,7 @@ class Snake {
   Snake(int, int);
   ~Snake() = default;
 
+  //Rule of 5 Implementation
   Snake(const Snake& other) = delete; 
   Snake& operator=(const Snake& other) = delete;
   Snake(Snake&& other) noexcept = delete;
@@ -27,16 +27,22 @@ class Snake {
 
   void Update();
   void GrowBody();
+
+  // Overloading Functions
   bool SnakeCell(int x, int y);
   bool SnakeCell(SDL_Point);
   bool SnakeCell(Snake::Position<float>);
 
   void IncreaseSpeed();
-  int GetSize() const;
   bool IsSnakeAlive() const;
+
+  //Setters & Getters
+  int GetSize() const;
   Position<float> GetSnakeHeadPosition () const;
   Direction GetSnakeDirection() const;
   void SetSnakeDirection (const Direction&);
+
+  //Data Structures and Variables
   std::vector<SDL_Point> body_;
 
 

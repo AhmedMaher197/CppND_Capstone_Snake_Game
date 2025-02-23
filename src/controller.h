@@ -10,7 +10,7 @@ class Controller {
  public:
   Controller();
   ~Controller();
-
+  //Rule of 5 Implementation
   Controller(const Controller& other) = delete; 
   Controller& operator=(const Controller& other) = delete;
   Controller(Controller&& other) noexcept = delete;
@@ -31,7 +31,7 @@ class Controller {
 
   void ChangeDirection(Snake &snake, const Snake::Direction& input,
                        const Snake::Direction& opposite) const;
-
+  //Mutex and Lock Implementation
   mutable std::mutex input_mutex_;    
   std::atomic<bool> running_{true};
 

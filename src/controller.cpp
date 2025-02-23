@@ -3,8 +3,10 @@
 #include "SDL.h"
 #include "snake.h"
 
+//Multithreading Implementation
 Controller::Controller() : input_thread_{&Controller::InputThreadFunction, this} {}
 
+//Destructor Implementation
 Controller::~Controller() 
 {
     running_ = false;
@@ -20,7 +22,7 @@ void Controller::InputThreadFunction()
     {
         SDL_Event e;
         while (SDL_PollEvent(&e)) {
-            // Lock mutex only when updating shared state
+            //Mutex and Lock Implementation
             std::lock_guard<std::mutex> lock(input_mutex_);
             
             if (e.type == SDL_QUIT) 
@@ -55,15 +57,17 @@ void Controller::InputThreadFunction()
     }
 }
 
+//Use of References in Function Declarations
 void Controller::ChangeDirection(Snake &snake, const Snake::Direction& input, const Snake::Direction& opposite) const 
 {
   if (snake.GetSnakeDirection() != opposite || snake.GetSize() == 1) 
     snake.SetSnakeDirection(input);
 }
 
+//User Input Processing
 void Controller::HandleInput(bool &running, Snake &snake) const 
 {
-    // Acquire lock to read input state
+    //Mutex and Lock Implementation
     std::lock_guard<std::mutex> lock(input_mutex_);
     
     if (input_state_.quit) 
