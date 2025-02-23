@@ -18,6 +18,12 @@ class Snake {
   };
 
   Snake(int, int);
+  ~Snake() = default;
+
+  Snake(const Snake& other) = delete; 
+  Snake& operator=(const Snake& other) = delete;
+  Snake(Snake&& other) noexcept = delete;
+  Snake& operator=(Snake&& other) noexcept = delete;
 
   void Update();
   void GrowBody();
@@ -30,7 +36,7 @@ class Snake {
   bool IsSnakeAlive() const;
   Position<float> GetSnakeHeadPosition () const;
   Direction GetSnakeDirection() const;
-  void SetSnakeDirection (Direction&&);
+  void SetSnakeDirection (const Direction&);
   std::vector<SDL_Point> body_;
 
 

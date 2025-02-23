@@ -141,7 +141,7 @@ Snake::Direction Snake::GetSnakeDirection() const
   return direction_;
 }
 
-void Snake::SetSnakeDirection (Direction&& direction)
+void Snake::SetSnakeDirection (const Direction& direction)
 {
   direction_ = direction;
 }

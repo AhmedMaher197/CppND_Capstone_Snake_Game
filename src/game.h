@@ -23,6 +23,13 @@ class GameConfig
 {
   public:
    GameConfig(const std::string&);
+   ~GameConfig() = default;
+
+  GameConfig(const GameConfig& other) = delete; 
+  GameConfig& operator=(const GameConfig& other) = delete;
+  GameConfig(GameConfig&& other) noexcept = delete;
+  GameConfig& operator=(GameConfig&& other) noexcept = delete;
+
    void SaveConfig(const std::string&); 
    void LoadConfig(const std::string&); 
    GameSettings GetGameSettings() const;
@@ -36,9 +43,16 @@ class GameConfig
 
 class Game {
  public:
-  Game(std::size_t grid_width, std::size_t grid_height);
+  Game(std::size_t& grid_width, std::size_t& grid_height);
+  ~Game() = default;
+
+  Game(const Game& other) = delete; 
+  Game& operator=(const Game& other) = delete;
+  Game(Game&& other) noexcept = delete;
+  Game& operator=(Game&& other) noexcept = delete;
+
   void Run(Controller const &controller, Renderer &renderer,
-           std::size_t target_frame_duration);
+           std::size_t& target_frame_duration);
   int GetScore() const;
   int GetSize() const;
 
