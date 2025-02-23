@@ -1,8 +1,35 @@
-# Snake Game Implementation
 
 ## Project Introduction
 This project creates a modern implementation of the classic Snake game using C++ and SDL2. The game features a snake that players control to collect food and grow longer while avoiding collisions. The implementation demonstrates various C++ programming concepts including object-oriented design, file operations, and user input handling.
 
+
+# Snake Game Features Documentation
+## Game Overview
+The Snake game is implemented as a modern C++ application that combines classic gameplay mechanics with advanced technical features. The game provides a responsive and smooth gaming experience through its multi-threaded architecture and efficient resource management.
+
+## Core Gameplay Features
+
+### Snake Movement and Control
+The game implements smooth snake movement using floating-point position tracking, allowing for precise control and fluid animation. The snake's movement is controlled using the arrow keys, with the following characteristics:
+- Continuous movement in the current direction
+- Immediate response to direction changes
+- Prevention of 180-degree turns when the snake is longer than one segment
+- Wrap-around movement when reaching screen boundaries
+
+### Growth and Scoring System
+The snake grows longer each time it consumes food, with the following mechanics:
+- Each food item increases the snake's length by one segment
+- Score increases with each food item collected
+- The snake's speed gradually increases as it grows longer, adding to the challenge
+- High scores are persistently stored between gaming sessions
+
+### Collision Detection
+The game features comprehensive collision detection that monitors:
+- Collisions between the snake and itself
+- Boundary interactions for wrap-around movement
+- Food collection detection with precise positioning
+
+This implementation provides a solid foundation for a classic game while incorporating modern programming practices and features that enhance both the gaming experience and code maintainability.
 ## Loops, Functions, and I/O Implementation Details
 
 ### 1. Understanding of C++ Functions and Control Structures
