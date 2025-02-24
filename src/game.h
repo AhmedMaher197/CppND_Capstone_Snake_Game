@@ -47,7 +47,7 @@ class GameConfig
 class Game {
  public:
   Game(std::size_t& grid_width, std::size_t& grid_height);
-  ~Game() = default;
+  ~Game();
 
   //Rule of 5 Implementation
   Game(const Game& other) = delete; 
@@ -78,12 +78,13 @@ class Game {
     SDL_Point poison_food_;              
     bool is_poison_food_active_;         
     bool is_snake_poisoned_;             
-    float original_speed_;               
+    float original_speed_;
+    bool terminate_;           
     
     // Thread synchronization members
     std::mutex poison_mutex_;            
     std::condition_variable poison_cv_;  
-    std::thread poison_food_thread_;   
+    std::thread poison_food_thread_;
 
   // New member functions for poison food logic
     void PoisonFoodTimer();             

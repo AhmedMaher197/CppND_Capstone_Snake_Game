@@ -112,7 +112,8 @@ Game::Game(std::size_t& grid_width, std::size_t& grid_height)
       poison_food_{},                    
       is_poison_food_active_{false},     
       is_snake_poisoned_{false},         
-      original_speed_{0.1f},             
+      original_speed_{0.1f},
+      terminate_{},             
       poison_mutex_{},                   
       poison_cv_{},                      
       poison_food_thread_{} 
@@ -156,7 +157,7 @@ void Game::PoisonFoodTimer() {
     
     std::unique_lock<std::mutex> lock(poison_mutex_);
     
-    while (!should_terminate_ && is_poison_food_active_) {
+    while (!terminate_ && is_poison_food_active_) {
         lock.unlock();
         
         auto current_time = std::chrono::high_resolution_clock::now();
@@ -179,7 +180,7 @@ Game::~Game()
 {
   {
       std::lock_guard<std::mutex> lock(poison_mutex_);
-      should_terminate_ = true;
+      terminate_ = true;
   }
   poison_cv_.notify_one();
   
