@@ -9,6 +9,7 @@ class Controller {
 
   Controller() = default;
   ~Controller() = default;
+  
   //Rule of 5 Implementation
   Controller(const Controller& other) = delete; 
   Controller& operator=(const Controller& other) = delete;
@@ -16,7 +17,7 @@ class Controller {
   Controller& operator=(Controller&& other) noexcept = delete;
 
  private:
-  void ChangeDirection(Snake &snake, Snake::Direction input,
+  void ChangeDirection(Snake &snake, const Snake::Direction& input,
                        Snake::Direction opposite) const;
 };
 

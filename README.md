@@ -36,7 +36,7 @@ This implementation provides a solid foundation for a classic game while incorpo
 The project demonstrates comprehensive understanding of C++ functions and control structures through several key implementations:
 
 Game Loop Implementation:
-[game.cpp][Line: 184]
+[game.cpp][Line: 205]
 [Game::Run]
 This method implements the main game loop with sophisticated control structures for managing frame timing, game state updates, and rendering coordination. The function demonstrates mastery of loop control, conditional statements, and function composition.
 
@@ -57,13 +57,13 @@ This method handles file output operations by saving game settings and high scor
 The project features robust input handling through its controller system:
 
 Input Handling:
-[controller.cpp][Line: 67]
+[controller.cpp][Line: 12]
 [Controller::HandleInput]
 This method processes user input in a thread-safe manner, demonstrating proper input validation and game state updates based on user actions.
 
 ### 4. Data Structures and Variables
 Snake Data Management:
-[snake.h][Line: 40]
+[snake.h][Line: 48]
 [Snake::body_]
 The implementation uses vectors to store the snake's body segments and employs constant variables for grid dimensions, demonstrating effective use of STL containers and immutable variables.
 
@@ -74,12 +74,12 @@ The implementation uses vectors to store the snake's body segments and employs c
 The project implements multiple classes with appropriate access specifiers and well-organized data members:
 
 Snake Class Structure:
-[snake.h][Line: 7-61]
+[snake.h][Line: 7-63]
 [Snake Class]
 The Snake class demonstrates proper encapsulation with private member variables for internal state (grid dimensions, speed, size) and public methods for external interaction. All data members are explicitly specified with appropriate access levels.
 
 Game Class Organization:
-[game.h][Line: 45-89]
+[game.h][Line: 47-97]
 [Game Class]
 The Game class shows clear separation of public interface and private implementation details. Member data subject to invariants, such as the random number generator and game state, is properly encapsulated with private access.
 
@@ -87,7 +87,7 @@ The Game class shows clear separation of public interface and private implementa
 The constructors in the project utilize member initialization lists effectively:
 
 Game Constructor:
-[game.cpp][Line: 107]
+[game.cpp][Line: 106]
 [Game::Game]
 The constructor demonstrates proper member initialization using initialization lists, setting up game state and random number generation components.
 
@@ -118,22 +118,17 @@ Implements a generic Position template that can work with different numeric type
 The project extensively uses references to avoid unnecessary copying and ensure efficient memory usage:
 
 Game Run Method:
-[game.cpp][Line: 171]
+[game.cpp][Line: 196]
 [Game::Run]
 This method takes both the controller and renderer as references, demonstrating efficient parameter passing for large objects. The target_frame_duration parameter is also passed by reference to allow modifications.
 
 Snake Direction Control:
-[controller.cpp][Line: 59]
+[controller.cpp][Line: 6]
 [Controller::ChangeDirection]
 Takes the snake object as a reference parameter, allowing direct manipulation of the snake's state without copying. The direction parameters are passed as const references to prevent modifications while avoiding copies.
 
 ### 2. Destructor Implementation
 The project implements destructors appropriately for classes managing resources:
-
-Controller Cleanup:
-[controller.cpp][Line: 8]
-[Controller::~Controller]
-The destructor properly manages the cleanup of the input thread, ensuring all resources are released when the controller object is destroyed.
 
 Renderer Cleanup:
 [renderer.cpp][Line: 36]
@@ -144,7 +139,7 @@ Handles the proper destruction of SDL resources, demonstrating RAII principles b
 The project properly implements move semantics and prevents unwanted copying:
 
 Game Class:
-[game.h][Line: 49]
+[game.h][Line: 52]
 [Game Class]
 Explicitly deletes copy constructor and assignment operator while providing proper resource management through destructor implementation.
 
@@ -158,46 +153,25 @@ Implements the Rule of Five by explicitly deleting copy operations and move oper
 ### 1. Multithreading Implementation
 The project implements multithreading to handle user input processing separately from the main game loop, ensuring responsive gameplay:
 
-Input Thread Creation:
-[controller.cpp][Line: 6]
-[Controller Constructor]
-Launches a dedicated input processing thread using std::thread, which continuously monitors for SDL events without blocking the main game loop. This implementation ensures smooth game operation by separating input handling from game state updates and rendering.
-
-Asynchronous Food Placement:
-[game.cpp][Line: 115,127]
-[Game Constructor]
-Implements asynchronous food placement calculations in a separate thread, demonstrating the use of multiple threads for performance optimization.
-
-### 2. Promise and Future Implementation
-The project uses futures for asynchronous operations:
-
-Food Position Calculation:
-[game.cpp][Line: 160]
-[Game::food_future_]
-Implements a std::future to handle asynchronous food placement calculations. This allows the main game loop to continue running while a separate thread determines valid food positions, with results passed back to the main thread through the future mechanism.
-
-Future Management:
-[game.cpp][Line: 128]
-[Game::StartFoodPlacement]
-Shows how futures are used to manage asynchronous tasks, demonstrating proper handling of concurrent operations and data passing between threads.
+Posinous Food Placement:
+[game.cpp][Line: 154]
+[StartPoisonFoodThread]
+This method start a thread to execute PoisonFoodTimer which start conting how long the poisonous food should be available on the map then its position shall be changed.
 
 ### 3. Mutex and Lock Implementation
 The project uses mutexes to protect shared resources:
 
-Input State Protection:
-[controller.h][Line: 37]
-[Controller::input_mutex_]
-Implements a mutex to protect shared input state data between the input processing thread and the main game thread, preventing race conditions.
+[game..h][Line: 86]
+[Game::poison_mutex_]
+Implements a mutex to protect shared input state data between the main thread and posion food thread.
 
-Food Position Protection:
-[game.h][Line: 81]
-[Game::food_mutex_]
-Uses a mutex to protect food position updates when switching between asynchronously calculated positions, ensuring thread-safe updates to game state.
 
-Lock Guard Usage:
-[controller.cpp][Line: 69]
-[Controller::HandleInput]
-Demonstrates proper use of std::lock_guard for RAII-style mutex locking, ensuring thread-safe access to shared resources.
+### 3. Use condition Variable
+The project use condition variable to synch thread execution
+
+[game.h][Line: 87]
+[Game::poison_cv_]
+The lock parameter makes sure no other part of the program interferes with our poison food state while we're checking it.
 
 ## Dependencies
 - SDL2 library

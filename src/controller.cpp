@@ -3,9 +3,9 @@
 #include "SDL.h"
 #include "snake.h"
 
-void Controller::ChangeDirection(Snake &snake, Snake::Direction input,
+void Controller::ChangeDirection(Snake &snake, const Snake::Direction& input,
                                  Snake::Direction opposite) const {
-  if (snake.GetSnakeDirection() != opposite || snake.GetSize() == 1) snake.SetSnakeDirection(std::move(input));
+  if (snake.GetSnakeDirection() != opposite || snake.GetSize() == 1) snake.SetSnakeDirection(input);
   return;
 }
 
