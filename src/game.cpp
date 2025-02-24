@@ -113,7 +113,8 @@ Game::Game(std::size_t& grid_width, std::size_t& grid_height)
       is_poison_food_active_{false},     
       is_snake_poisoned_{false},         
       original_speed_{0.1f},
-      terminate_{},             
+      terminate_{},
+      poison_start_time_{},             
       poison_mutex_{},                   
       poison_cv_{},                      
       poison_food_thread_{} 
@@ -139,15 +140,31 @@ void Game::PlacePoisonFood()
     }
 }
 
-void Game::StartPoisonFoodThread() 
-{
-    if (!is_poison_food_active_) 
-    {
+void Game::StartPoisonFoodThread() {
+    if (!is_poison_food_active_) {
+        // First check if there's an existing thread and join it
+        if (poison_food_thread_.joinable()) {
+            poison_food_thread_.join();
+        }
+        
         PlacePoisonFood();
         is_poison_food_active_ = true;
         
-        // Start the timer thread
+        // Start new thread
         poison_food_thread_ = std::thread(&Game::PoisonFoodTimer, this);
+    }
+}
+
+// In destructor
+Game::~Game() {
+    {
+        std::lock_guard<std::mutex> lock(poison_mutex_);
+        is_poison_food_active_ = false;
+    }
+    poison_cv_.notify_all();
+    
+    if (poison_food_thread_.joinable()) {
+        poison_food_thread_.join();
     }
 }
 
@@ -174,19 +191,6 @@ void Game::PoisonFoodTimer() {
         lock.lock();
         poison_cv_.wait_for(lock, std::chrono::milliseconds(800));
     }
-}
-
-Game::~Game() 
-{
-  {
-      std::lock_guard<std::mutex> lock(poison_mutex_);
-      terminate_ = true;
-  }
-  poison_cv_.notify_one();
-  
-  if (poison_food_thread_.joinable()) {
-      poison_food_thread_.join();
-  }
 }
 
 void Game::Run(Controller const &controller, Renderer &renderer,
@@ -272,7 +276,7 @@ void Game::Update() {
         snake.IncreaseSpeed();
     }
 
-    // Add poison food collision handling
+    // Handle poison food collision
     {
         std::lock_guard<std::mutex> lock(poison_mutex_);
         if (is_poison_food_active_ && 
@@ -281,22 +285,27 @@ void Game::Update() {
             if (!is_snake_poisoned_) {
                 is_snake_poisoned_ = true;
                 original_speed_ = snake.GetSpeed();
-                snake.SetSpeed(original_speed_ * 0.5f);  // Slow down by 50%
+                snake.SetSpeed(original_speed_ * 0.5f);  // Reduce to half speed
                 
-                // Create thread to remove poison effect after 3 seconds
-                std::thread([this]() {
-                    std::this_thread::sleep_for(std::chrono::seconds(3));
-                    is_snake_poisoned_ = false;
-                    snake.SetSpeed(original_speed_);
-                }).detach();
+                // Instead of creating a new thread, use a timer
+                poison_start_time_ = SDL_GetTicks();
+                
+                // Move poison effect handling to the main game loop
+                is_poison_food_active_ = false;
+                poison_food_ = {-1, -1};
             }
-            
-            is_poison_food_active_ = false;
-            poison_food_ = {-1, -1};
+        }
+    }
+    
+    // Handle poison effect duration in the main loop
+    if (is_snake_poisoned_) {
+        if (SDL_GetTicks() - poison_start_time_ >= 3000) {  // 3 seconds
+            is_snake_poisoned_ = false;
+            snake.SetSpeed(original_speed_);
+            poison_start_time 0;
         }
     }
 }
-
 
 int Game::GetScore() const { return score; }
 int Game::GetSize() const { return snake.GetSize(); }

@@ -79,7 +79,8 @@ class Game {
     bool is_poison_food_active_;         
     bool is_snake_poisoned_;             
     float original_speed_;
-    bool terminate_;           
+    bool terminate_;    
+    uint32_t poison_start_time_;       
     
     // Thread synchronization members
     std::mutex poison_mutex_;            
