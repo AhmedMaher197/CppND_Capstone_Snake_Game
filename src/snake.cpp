@@ -146,12 +146,12 @@ void Snake::SetSnakeDirection (const Direction& direction)
   direction_ = direction;
 }
 
-void Snake::SetSpeed(int speed)
+void Snake::SetSpeed(float speed)
 {
   speed_ = speed;
 }
 
-int Snake::GetSpeed()
+float Snake::GetSpeed()
 {
   return speed_;
 }

@@ -302,7 +302,7 @@ void Game::Update() {
         if (SDL_GetTicks() - poison_start_time_ >= 3000) {  // 3 seconds
             is_snake_poisoned_ = false;
             snake.SetSpeed(original_speed_);
-            poison_start_time_ 0;
+            poison_start_time_ = 0;
         }
     }
 }
