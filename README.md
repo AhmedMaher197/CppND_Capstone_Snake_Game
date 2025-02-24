@@ -29,6 +29,9 @@ The game features comprehensive collision detection that monitors:
 - Boundary interactions for wrap-around movement
 - Food collection detection with precise positioning
 
+### Posion Food
+The sanke speed will be decrease by 50 % as if the user eats posionous food.
+
 This implementation provides a solid foundation for a classic game while incorporating modern programming practices and features that enhance both the gaming experience and code maintainability.
 ## Loops, Functions, and I/O Implementation Details
 
