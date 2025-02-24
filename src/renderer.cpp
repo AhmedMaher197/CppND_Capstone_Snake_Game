@@ -39,7 +39,11 @@ Renderer::~Renderer() {
   SDL_Quit();
 }
 
-void Renderer::Render(Snake const& snake, SDL_Point const &food) {
+void Renderer::Render(Snake const& snake, 
+                     SDL_Point const& food,
+                     SDL_Point const& poison_food,
+                     bool is_poison_food_active)
+{
   SDL_Rect block;
   block.w = screen_width / grid_width;
   block.h = screen_height / grid_height;
@@ -53,6 +57,14 @@ void Renderer::Render(Snake const& snake, SDL_Point const &food) {
   block.x = food.x * block.w;
   block.y = food.y * block.h;
   SDL_RenderFillRect(sdl_renderer, &block);
+
+  // Render poison food if active (purple)
+    if (is_poison_food_active) {
+        SDL_SetRenderDrawColor(sdl_renderer, 0x80, 0x00, 0x80, 0xFF);
+        block.x = poison_food.x * block.w;
+        block.y = poison_food.y * block.h;
+        SDL_RenderFillRect(sdl_renderer, &block);
+    }
 
   // Render snake's body
   SDL_SetRenderDrawColor(sdl_renderer, 0xFF, 0xFF, 0xFF, 0xFF);

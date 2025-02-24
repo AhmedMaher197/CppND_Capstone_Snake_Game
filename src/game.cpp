@@ -2,7 +2,6 @@
 #include <iostream>
 #include "SDL.h"
 
-
 GameConfig::GameConfig(const std::string& config_file) : highest_score_{},
                                                          game_settings_{
                                                                          60,                   // frames_per_second - standard refresh rate
@@ -104,78 +103,91 @@ GameSettings GameConfig::GetGameSettings() const
   return game_settings_;
 }
 
-//Constructor Implementation
 Game::Game(std::size_t& grid_width, std::size_t& grid_height)
     : snake(grid_width, grid_height),
-      food{},
-      running_{true},
-      engine{dev()},
+      engine(dev()),
       random_w(0, static_cast<int>(grid_width - 1)),
       random_h(0, static_cast<int>(grid_height - 1)),
-      food_future_{},
-      food_mutex_{}
+      score{0},
+      poison_food_{},                    
+      is_poison_food_active_{false},     
+      is_snake_poisoned_{false},         
+      original_speed_{0.1f},             
+      poison_mutex_{},                   
+      poison_cv_{},                      
+      poison_food_thread_{} 
 {
-  //Multithreading Implementation
-  StartFoodPlacement();
+  PlaceFood();
+}
+
+
+void Game::PlacePoisonFood() 
+{
+    int x, y;
+    while (true) 
+    {
+        x = random_w(engine);
+        y = random_h(engine);
+        
+        // Thread-safe check for valid position
+        std::lock_guard<std::mutex> lock(poison_mutex_);
+        if (!snake.SnakeCell(x, y) && !(food.x == x && food.y == y)) {
+            poison_food_ = {x, y};
+            break;
+        }
+    }
+}
+
+void Game::StartPoisonFoodThread() 
+{
+    if (!is_poison_food_active_) 
+    {
+        PlacePoisonFood();
+        is_poison_food_active_ = true;
+        
+        // Start the timer thread
+        poison_food_thread_ = std::thread(&Game::PoisonFoodTimer, this);
+    }
+}
+
+void Game::PoisonFoodTimer() {
+    const int poison_duration = 5;  // Poison food stays for 5 seconds
+    auto start_time = std::chrono::high_resolution_clock::now();
+    
+    std::unique_lock<std::mutex> lock(poison_mutex_);
+    
+    while (!should_terminate_ && is_poison_food_active_) {
+        lock.unlock();
+        
+        auto current_time = std::chrono::high_resolution_clock::now();
+        auto elapsed_seconds = std::chrono::duration_cast<std::chrono::seconds>(
+            current_time - start_time).count();
+            
+        if (elapsed_seconds >= poison_duration) {
+            std::lock_guard<std::mutex> remove_lock(poison_mutex_);
+            is_poison_food_active_ = false;
+            poison_food_ = {-1, -1};  // Move off screen
+            break;
+        }
+        
+        lock.lock();
+        poison_cv_.wait_for(lock, std::chrono::milliseconds(800));
+    }
 }
 
 Game::~Game() 
 {
-  running_ = false;
-  if (food_future_.valid()) 
   {
-    food_future_.wait();  
+      std::lock_guard<std::mutex> lock(poison_mutex_);
+      should_terminate_ = true;
+  }
+  poison_cv_.notify_one();
+  
+  if (poison_food_thread_.joinable()) {
+      poison_food_thread_.join();
   }
 }
 
-//Multithreading Implementation
-//Promise and Future Implementation
-void Game::StartFoodPlacement() 
-{
-  food_future_ = std::async(std::launch::async, 
-                           &Game::CalculateNextFoodPosition, 
-                           this);
-}
-
-Game::FoodPosition Game::CalculateNextFoodPosition() 
-{
-  FoodPosition position;
-  position.valid = false;
-
-  // Keep trying positions until we find a valid one or the game is stopping
-  while (running_) 
-  {
-    position.x = random_w(engine);
-    position.y = random_h(engine);
-
-    // Check if position is valid (not occupied by snake)
-    if (!snake.SnakeCell(position.x, position.y)) 
-    {
-      position.valid = true;
-      return position;
-    }
-  }
-
-  return position;  // Return invalid position if game is stopping
-}
-
-void Game::UpdateFoodPosition() 
-{
-  //Promise and Future Implementation
-  if (food_future_.valid() && 
-      food_future_.wait_for(std::chrono::seconds(0)) == std::future_status::ready) 
-  {
-    
-    auto new_position = food_future_.get();
-    if (new_position.valid) {
-      std::lock_guard<std::mutex> lock(food_mutex_);
-      food.x = new_position.x;
-      food.y = new_position.y;
-    }
-  }
-}
-
-//Use of References in Function Declarations
 void Game::Run(Controller const &controller, Renderer &renderer,
                std::size_t& target_frame_duration) {
   Uint32 title_timestamp = SDL_GetTicks();
@@ -184,14 +196,14 @@ void Game::Run(Controller const &controller, Renderer &renderer,
   Uint32 frame_duration;
   int frame_count = 0;
   bool running = true;
-  //Understanding of C++ Functions and Control Structures
+
   while (running) {
     frame_start = SDL_GetTicks();
 
     // Input, Update, Render - the main game loop.
     controller.HandleInput(running, snake);
     Update();
-    renderer.Render(snake, food);
+    renderer.Render(snake, food, poison_food_, is_poison_food_active_);
 
     frame_end = SDL_GetTicks();
 
@@ -216,38 +228,74 @@ void Game::Run(Controller const &controller, Renderer &renderer,
   }
 }
 
-void Game::Update() 
-{
-  if (!snake.IsSnakeAlive()) return;
-
-  snake.Update();
-
-  auto snake_head_pos = snake.GetSnakeHeadPosition();
-  int new_x = static_cast<int>(snake_head_pos.x);
-  int new_y = static_cast<int>(snake_head_pos.y);
-
-  // Check if snake has found food
-  bool food_eaten = false;
-  {
-    std::lock_guard<std::mutex> lock(food_mutex_);
-    if (food.x == new_x && food.y == new_y) {
-      food_eaten = true;
+void Game::PlaceFood() {
+  int x, y;
+  while (true) {
+    x = random_w(engine);
+    y = random_h(engine);
+    // Check that the location is not occupied by a snake item before placing
+    // food.
+    if (!snake.SnakeCell(x, y)) {
+      food.x = x;
+      food.y = y;
+      return;
     }
   }
-
-  if (food_eaten) {
-    score++;
-    // Start calculating next food position asynchronously
-    StartFoodPlacement();
-    
-    // Grow snake and increase speed
-    snake.GrowBody();
-    snake.IncreaseSpeed();
-  }
-  
-  // Check if we need to update food position from async calculation
-  UpdateFoodPosition();
 }
+
+// Modify Update() to include poison food logic
+void Game::Update() {
+    if (!snake.IsSnakeAlive()) return;
+
+    snake.Update();
+    
+    // Check if it's time to spawn new poison food (every 10 seconds)
+    static Uint32 last_poison_spawn = SDL_GetTicks();
+    Uint32 current_time = SDL_GetTicks();
+    
+    if (current_time - last_poison_spawn >= 10000) 
+    {
+        StartPoisonFoodThread();
+        last_poison_spawn = current_time;
+    }
+
+    // Handle regular food collision (existing code)
+    auto snake_head_pos = snake.GetSnakeHeadPosition();
+    int new_x = static_cast<int>(snake_head_pos.x);
+    int new_y = static_cast<int>(snake_head_pos.y);
+
+    if (food.x == new_x && food.y == new_y) {
+        score++;
+        PlaceFood();
+        snake.GrowBody();
+        snake.IncreaseSpeed();
+    }
+
+    // Add poison food collision handling
+    {
+        std::lock_guard<std::mutex> lock(poison_mutex_);
+        if (is_poison_food_active_ && 
+            poison_food_.x == new_x && poison_food_.y == new_y) {
+            
+            if (!is_snake_poisoned_) {
+                is_snake_poisoned_ = true;
+                original_speed_ = snake.GetSpeed();
+                snake.SetSpeed(original_speed_ * 0.5f);  // Slow down by 50%
+                
+                // Create thread to remove poison effect after 3 seconds
+                std::thread([this]() {
+                    std::this_thread::sleep_for(std::chrono::seconds(3));
+                    is_snake_poisoned_ = false;
+                    snake.SetSpeed(original_speed_);
+                }).detach();
+            }
+            
+            is_poison_food_active_ = false;
+            poison_food_ = {-1, -1};
+        }
+    }
+}
+
 
 int Game::GetScore() const { return score; }
 int Game::GetSize() const { return snake.GetSize(); }

@@ -16,7 +16,10 @@ class Renderer {
   Renderer(Renderer&& other) noexcept = delete;
   Renderer& operator=(Renderer&& other) noexcept = delete;
 
-  void Render(Snake const& snake, SDL_Point const &food);
+  void Render(Snake const& snake, 
+                SDL_Point const& food,
+                SDL_Point const& poison_food,
+                bool is_poison_food_active);
   void UpdateWindowTitle(int& score, int& fps);
 
  private:

@@ -9,6 +9,8 @@
 #include <fstream>  
 #include <sstream>  
 #include <future>
+#include <thread>   
+#include <chrono>
 
 struct GameSettings
 {
@@ -45,7 +47,7 @@ class GameConfig
 class Game {
  public:
   Game(std::size_t& grid_width, std::size_t& grid_height);
-  ~Game();
+  ~Game() = default;
 
   //Rule of 5 Implementation
   Game(const Game& other) = delete; 
@@ -62,32 +64,33 @@ class Game {
 
  private:
 
-  struct FoodPosition 
-  {
-    int x;
-    int y;
-    bool valid;  
-  };
-
   Snake snake;
   SDL_Point food;
-  std::atomic<bool> running_; 
 
   std::random_device dev;
   std::mt19937 engine;
   std::uniform_int_distribution<int> random_w;
   std::uniform_int_distribution<int> random_h;
 
-  int score{0};
-  
-  std::future<FoodPosition> food_future_;  // Holds the future food position
-  //Mutex and Lock Implementation
-  mutable std::mutex food_mutex_;          // Protects food position updates
+  int score;
 
-  // Food placement methods
-  void StartFoodPlacement();               // Initiates async food calculation
-  FoodPosition CalculateNextFoodPosition();// Worker thread function
-  void UpdateFoodPosition();               // Checks and updates food position
+  // New member variables for poison food mechanics
+    SDL_Point poison_food_;              
+    bool is_poison_food_active_;         
+    bool is_snake_poisoned_;             
+    float original_speed_;               
+    
+    // Thread synchronization members
+    std::mutex poison_mutex_;            
+    std::condition_variable poison_cv_;  
+    std::thread poison_food_thread_;   
+
+  // New member functions for poison food logic
+    void PoisonFoodTimer();             
+    void StartPoisonFoodThread();       
+    void PlacePoisonFood();             
+
+  void PlaceFood();
   void Update();
 };
 

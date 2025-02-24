@@ -34,6 +34,8 @@ class Snake {
   bool SnakeCell(Snake::Position<float>);
 
   void IncreaseSpeed();
+  void SetSpeed(int);
+  int GetSpeed();
   bool IsSnakeAlive() const;
 
   //Setters & Getters
